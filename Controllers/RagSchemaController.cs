@@ -113,7 +113,7 @@ namespace SednaRag.Controllers
         }
 
         // Endpoint per eseguire la query generata
-        [HttpPost("execute")]
+       /* [HttpPost("execute")]
         public async Task<IActionResult> ExecuteQuery([FromBody] ExecuteQueryRequest request)
         {
             try
@@ -144,7 +144,7 @@ namespace SednaRag.Controllers
                 _logger.LogError(ex, "Errore nell'esecuzione query");
                 return StatusCode(500, new { Success = false, Error = ex.Message });
             }
-        }
+        }*/
 
         // Endpoint per salvare un esempio di query utile
         [HttpPost("save-example")]
