@@ -349,14 +349,32 @@ Rispondi in formato JSON con questa struttura:
                 {
                     // Parse JSON response
                     var jsonResponse = JsonSerializer.Deserialize<GeneratedQueryJson>(responseContent);
+                    string sqlQuery = jsonResponse.SqlQuery;
 
+                    if (!ValidateSqlQuery(sqlQuery))
+                    {
+                        // Se la query non è valida, genera un errore o una query sicura predefinita
+                        _logger.LogError("Query SQL non sicura generata dall'IA. Query originale: {OriginalQuery}", query);
+
+                        return new GeneratedQuery
+                        {
+                            SqlQuery = "SELECT 'Query non sicura generata' AS Message",
+                            Explanation = "La query generata dall'assistente AI è stata bloccata per motivi di sicurezza.",
+                            InputTokens = inputTokens,
+                            OutputTokens = outputTokens,
+                            TotalTokens = totalTokens,
+                            IsSafe = false
+                        };
+                    }
                     return new GeneratedQuery
                     {
                         SqlQuery = jsonResponse.SqlQuery,
                         Explanation = jsonResponse.Explanation,
                         InputTokens = inputTokens,     // Usa InputTokens invece di PromptTokens
                         OutputTokens = outputTokens,   // Usa OutputTokens invece di CompletionTokens
-                        TotalTokens = totalTokens      // Aggiungi TotalTokens
+                        TotalTokens = totalTokens,      // Aggiungi TotalTokens
+                        IsSafe = true
+
                     };
                 }
                 catch (JsonException ex)
@@ -380,7 +398,45 @@ Rispondi in formato JSON con questa struttura:
                 throw;
             }
         }
+        private bool ValidateSqlQuery(string sqlQuery)
+        {
+            // Converti in minuscolo per controlli case-insensitive
+            string queryLower = sqlQuery.ToLowerInvariant();
 
+            // Lista di comandi potenzialmente pericolosi che vogliamo bloccare
+            string[] dangerousCommands = new[] {
+                "drop table", "drop database", "truncate table",
+                "alter table", "delete from", "update ", "insert into",
+                "exec ", "execute ", "sp_", "xp_",
+                "create ", "alter ", "begin transaction", "commit", "rollback"
+            };
+
+            // Controlla se la query contiene comandi pericolosi
+            foreach (var command in dangerousCommands)
+            {
+                if (queryLower.Contains(command))
+                {
+                    _logger.LogWarning("Query potenzialmente pericolosa rilevata. Contiene: {Command}", command);
+                    return false;
+                }
+            }
+
+            // Se la query contiene più di una istruzione (con punto e virgola)
+            if (queryLower.Count(c => c == ';') > 1)
+            {
+                _logger.LogWarning("Query con più istruzioni rilevata, possibile pericolo");
+                return false;
+            }
+
+            // Verifica che la query sia di tipo SELECT
+            if (!queryLower.TrimStart().StartsWith("select "))
+            {
+                _logger.LogWarning("Query non SELECT rilevata");
+                return false;
+            }
+
+            return true;
+        }
         // Estrae SQL da testo non strutturato (fallback)
         private string ExtractSqlFromText(string text)
         {

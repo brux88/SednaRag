@@ -7,5 +7,6 @@
         public int InputTokens { get; set; }     // Cambiato da PromptTokens
         public int OutputTokens { get; set; }    // Cambiato da CompletionTokens
         public int TotalTokens { get; set; }     // Aggiunto
+        public bool IsSafe { get; set; }     // Aggiunto
     }
 }
