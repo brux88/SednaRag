@@ -24,6 +24,10 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using SednaRag.Services;
 using SednaRag.Middleware;
+using SednaRag.Helpers;
+using FluentValidation.AspNetCore;
+using FluentValidation;
+using Microsoft.Win32;
 
 namespace SednaRag
 {
@@ -61,6 +65,17 @@ namespace SednaRag
                 return new SearchClient(endpoint, indexName, new AzureKeyCredential(key));
             });
 
+            builder.Services.AddHttpContextAccessor();
+            builder.Services.AddMemoryCache(); // o un'altra implementazione di IDistributedCache
+
+
+            // Registra l'HttpClient per il servizio di licenze
+            builder.Services.AddHttpClient("LicenseService", (sp,client) =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                client.BaseAddress = new Uri(config["LicenseService:BaseUrl"]);
+                client.Timeout = TimeSpan.FromSeconds(30);
+            });
             // Servizi per RAG
             builder.Services.AddSingleton<RagService>();
             builder.Services.AddSingleton<SchemaImportService>();
@@ -71,6 +86,12 @@ namespace SednaRag
                 options.Configuration = builder.Configuration.GetConnectionString("Redis");
                 options.InstanceName = "OrtofruttaRAG_";
             });
+
+            // Aggiungi rate limiting
+            builder.Services.AddRateLimiting(builder.Configuration);
+
+            // Aggiungi validazione richieste
+            builder.Services.AddRequestValidation();
 
             // Aggiungi middleware per logging e telemetria
             builder.Services.AddApplicationInsightsTelemetry();
@@ -113,7 +134,7 @@ namespace SednaRag
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
-
+            app.UseRateLimiting();
             app.UseHttpsRedirection();
             app.UseCors("AllowSpecificOrigins");
 
@@ -127,4 +148,6 @@ namespace SednaRag
             app.Run();
         }
     }
-}
+
+
+ }

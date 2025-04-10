@@ -12,11 +12,6 @@ namespace SednaRag.Models
 
         [JsonPropertyName("module")]
         public string? Module { get; set; }
-
-        [JsonPropertyName("tokenLimit")]
-        public int TokenLimit { get; set; }  // Limite massimo di token per il cliente
-
-        [JsonPropertyName("tokensUsed")]
-        public int TokensUsed { get; set; }  //
+ 
     }
 }

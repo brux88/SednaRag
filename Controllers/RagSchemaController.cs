@@ -1,9 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using SednaRag.Helpers;
 using SednaRag.Models;
 using SednaRag.Services;
 
 namespace SednaRag.Controllers
 {
+    [ApiKey]
     [ApiController]
     [Route("api/[controller]")]
     public class RagSchemaController : ControllerBase
@@ -73,25 +76,6 @@ namespace SednaRag.Controllers
                 {
                     return BadRequest("Query e ClientId sono obbligatori");
                 }
-                // Verifica disponibilità token
-                int tokensRemaining = request.TokenLimit - request.TokensUsed;
-
-                // Stima iniziale dei token necessari per questa query
-                int estimatedQueryLength = request.Query.Length / 4;
-                int estimatedContextTokens = 1000;
-                int estimatedCompletionTokens = 500;
-                int estimatedTotalTokens = estimatedQueryLength + estimatedContextTokens + estimatedCompletionTokens;
-
-                if (tokensRemaining < estimatedTotalTokens)
-                {
-                    return BadRequest(new
-                    {
-                        Success = false,
-                        Error = "Limite token raggiunto. Acquista un nuovo pacchetto.",
-                        TokensRemaining = tokensRemaining,
-                        EstimatedRequired = estimatedTotalTokens
-                    });
-                }
 
                 _logger.LogInformation("Nuova richiesta RAG: {Query}", request.Query);
 
@@ -99,9 +83,7 @@ namespace SednaRag.Controllers
                 var result = await _ragService.ProcessQueryAsync(
                     request.Query,
                     request.ClientId,
-                    request.Module,
-                    request.TokenLimit,
-                    request.TokensUsed);
+                    request.Module);
 
                 return Ok(result);
             }

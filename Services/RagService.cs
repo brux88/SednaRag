@@ -2,11 +2,15 @@
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
 using Dapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Identity.Client;
 using OpenAI.Chat;
 using SednaRag.Models;
+using SharpToken;
 using System.ClientModel;
+using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 
@@ -14,36 +18,60 @@ namespace SednaRag.Services
 {
     public class RagService
     {
+
+ 
+
         private readonly AzureOpenAIClient _openAIClient;
         private readonly SearchClient _searchClient;
         private readonly IConfiguration _configuration;
         private readonly ILogger<RagService> _logger;
         private readonly IDistributedCache _cache;
+        private readonly HttpClient _httpClient;
+        private readonly IHttpContextAccessor _httpContextAccessor;
+        private string LicenseServiceBaseUrl => _configuration["LicenseService:BaseUrl"];
 
         public RagService(
             AzureOpenAIClient openAIClient,
             SearchClient searchClient,
             IConfiguration configuration,
             IDistributedCache cache,
-            ILogger<RagService> logger)
+            ILogger<RagService> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _openAIClient = openAIClient;
             _searchClient = searchClient;
             _configuration = configuration;
             _cache = cache;
             _logger = logger;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         // Processa una query in linguaggio naturale
         public async Task<RagQueryResponse> ProcessQueryAsync(
             string query,
             string clientId,
-            string module = null,
-            int tokenLimit = 0,
-            int tokensUsed = 0)
+            string module = null)
         {
             try
             {
+                // Ottieni l'API key dagli header o dal contesto della richiesta
+                // Ottieni l'API key e tutte le altre informazioni dal contesto della richiesta
+                string apiKey = _httpContextAccessor.HttpContext.Items["ApiKey"] as string;
+                int richiesteDisponibili = _httpContextAccessor.HttpContext.Items["RichiesteDisponibili"] != null
+                    ? (int)_httpContextAccessor.HttpContext.Items["RichiesteDisponibili"]
+                    : 0;
+                int lastWeekUsage = _httpContextAccessor.HttpContext.Items["LastWeekUsage"] != null
+                    ? (int)_httpContextAccessor.HttpContext.Items["LastWeekUsage"]
+                    : 0;
+                string ragioneSociale = _httpContextAccessor.HttpContext.Items["RagioneSociale"] as string;
+
+                if (richiesteDisponibili <= 0)
+                {
+                    throw new InvalidOperationException("Limite di richieste AI raggiunto. Acquista ulteriori crediti.");
+                }
+
+
+
                 // Verifica se la risposta è in cache
                 string cacheKey = $"query_{clientId}_{module ?? "all"}_{ComputeHash(query)}";
 
@@ -53,8 +81,7 @@ namespace SednaRag.Services
                     _logger.LogInformation("Risposta trovata in cache per query: {Query}", query);
                     return JsonSerializer.Deserialize<RagQueryResponse>(cachedResponse);
                 }
-                // Calcola token residui
-                int tokensRemaining = tokenLimit - tokensUsed;
+               
 
                 // Calcola token di embedding (approssimazione)
                 int embeddingTokens = EstimateTokenCount(query);
@@ -70,7 +97,28 @@ namespace SednaRag.Services
                                       embeddingTokens;
 
                 // Nuovi token residui dopo questa query
-                int newTokensRemaining = tokensRemaining - tokensUsedInQuery;
+                //int newTokensRemaining = tokensRemaining - tokensUsedInQuery;
+
+                // Aggiorna il conteggio dei token nel servizio licenze
+                var tokenUpdateRequest = new
+                {
+                    ApiKey = apiKey,
+                    TokensUsed = tokensUsedInQuery
+                };
+
+                var updateResponse = await _httpClient.PostAsJsonAsync(
+                    $"{LicenseServiceBaseUrl}/updateRichiesteAI",
+                    tokenUpdateRequest);
+
+                if (!updateResponse.IsSuccessStatusCode)
+                {
+                    _logger.LogError("Errore durante l'aggiornamento del conteggio token: {StatusCode}", updateResponse.StatusCode);
+                    throw new InvalidOperationException("Errore nell'aggiornamento dei token consumati");
+                }
+
+                // Leggi i token rimanenti dalla risposta
+                var tokenRimasti = await updateResponse.Content.ReadFromJsonAsync<int>();
+
 
                 // Costruisci risposta
                 var response = new RagQueryResponse
@@ -92,9 +140,9 @@ namespace SednaRag.Services
                         EmbeddingTokens = embeddingTokens,
                         TotalInQuery = tokensUsedInQuery
                     },
-                    TokenLimit = tokenLimit,
-                    TotalTokensUsed = tokensUsed + tokensUsedInQuery,
-                    TokensRemaining = newTokensRemaining
+                    TokenLimit = richiesteDisponibili + tokensUsedInQuery, // Usa il valore dal servizio licenze
+                    TotalTokensUsed =  tokensUsedInQuery,
+                    TokensRemaining = tokenRimasti,//newTokensRemaining
                 };
 
                 // Salva in cache per future richieste
@@ -120,9 +168,12 @@ namespace SednaRag.Services
         // Metodo helper per stimare i token
         private int EstimateTokenCount(string text)
         {
+            var encoding = GptEncoding.GetEncodingForModel(_configuration["Azure:OpenAI:DeploymentName"]);
+            int tokenCount = encoding.Encode(text).Count;
+            return tokenCount;
             // Approssimazione semplice: ~4 caratteri per token
             // Per una stima più precisa, potresti usare una libreria tokenizer
-            return text.Length / 4;
+            //return text.Length / 4;
         }
         // Esegue una query SQL su un'istanza client
         public async Task<List<dynamic>> ExecuteQueryAsync(
