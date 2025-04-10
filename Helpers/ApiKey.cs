@@ -7,6 +7,7 @@
     using Microsoft.Extensions.DependencyInjection;
     using SednaRag.Models;
     using System;
+    using System.Net.Http;
     using System.Security.Cryptography;
     using System.Threading.Tasks;
     using static System.Runtime.InteropServices.JavaScript.JSType;
@@ -48,6 +49,7 @@
                     return;
                 }
                 // Utilizza il nuovo endpoint getTokenBalance per ottenere il saldo reale
+                _httpClient.DefaultRequestHeaders.Clear();
                 _httpClient.DefaultRequestHeaders.Add("ApiKey", $"{apiKey}");
                 var response = await _httpClient.GetAsync($"{_licenseServiceBaseUrl}/getTokenBalance/{apiKey}");
 

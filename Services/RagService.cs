@@ -26,7 +26,7 @@ namespace SednaRag.Services
         private readonly IConfiguration _configuration;
         private readonly ILogger<RagService> _logger;
         private readonly IDistributedCache _cache;
-        private readonly HttpClient _httpClient;
+        private  HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private string LicenseServiceBaseUrl => _configuration["LicenseService:BaseUrl"];
 
@@ -100,14 +100,19 @@ namespace SednaRag.Services
                 //int newTokensRemaining = tokensRemaining - tokensUsedInQuery;
 
                 // Aggiorna il conteggio dei token nel servizio licenze
-                var tokenUpdateRequest = new
+                var tokenUpdateRequest = new TokenUsageRequest
                 {
                     ApiKey = apiKey,
-                    TokensUsed = tokensUsedInQuery
+                    TokensUsed = tokensUsedInQuery,
+                    Module = module,
+                    PromptType = "Query User",
+                    QueryText = query
                 };
+                _httpClient = new HttpClient();
+                _httpClient.DefaultRequestHeaders.Add("ApiKey", $"{apiKey}");
 
                 var updateResponse = await _httpClient.PostAsJsonAsync(
-                    $"{LicenseServiceBaseUrl}/updateRichiesteAI",
+                    $"{LicenseServiceBaseUrl}/updateTokenAI/{apiKey}",
                     tokenUpdateRequest);
 
                 if (!updateResponse.IsSuccessStatusCode)
@@ -117,7 +122,7 @@ namespace SednaRag.Services
                 }
 
                 // Leggi i token rimanenti dalla risposta
-                var tokenRimasti = await updateResponse.Content.ReadFromJsonAsync<int>();
+                var tokenResponse = await updateResponse.Content.ReadFromJsonAsync<TokenUsageResponse>();
 
 
                 // Costruisci risposta
@@ -140,9 +145,9 @@ namespace SednaRag.Services
                         EmbeddingTokens = embeddingTokens,
                         TotalInQuery = tokensUsedInQuery
                     },
-                    TokenLimit = richiesteDisponibili + tokensUsedInQuery, // Usa il valore dal servizio licenze
+                    TokenLimit = richiesteDisponibili, // Usa il valore dal servizio licenze
                     TotalTokensUsed =  tokensUsedInQuery,
-                    TokensRemaining = tokenRimasti,//newTokensRemaining
+                    TokensRemaining = tokenResponse?.TokensRemaining ?? 0,//newTokensRemaining
                 };
 
                 // Salva in cache per future richieste
