@@ -7,6 +7,9 @@ namespace SednaRag.Models
         [JsonPropertyName("success")]
         public bool Success { get; set; }
 
+        [JsonPropertyName("isSafe")]
+        public bool IsSafe { get; set; }
+
         [JsonPropertyName("queryGenerated")]
         public string QueryGenerated { get; set; }
 

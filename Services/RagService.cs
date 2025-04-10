@@ -129,6 +129,7 @@ namespace SednaRag.Services
                 var response = new RagQueryResponse
                 {
                     Success = true,
+                    IsSafe = generatedQuery.IsSafe,
                     QueryGenerated = generatedQuery.SqlQuery,
                     Explanation = generatedQuery.Explanation,
                     RelevantContexts = relevantDocuments.Select(d => new RelevantContext
