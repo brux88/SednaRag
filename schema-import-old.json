@@ -1,0 +1,930 @@
+{
+  "clientId": "erp_ortofrutticolo",
+  "tables": [
+    {
+      "name": "TestataDocumento",
+      "description": "Tabella principale per le testate dei documenti di acquisto e vendita",
+      "columns": [
+        {
+          "name": "Id",
+          "dataType": "uniqueidentifier",
+          "description": "Identificativo univoco del documento",
+          "isPrimaryKey": true,
+          "isForeignKey": false
+        },
+        {
+          "name": "Tipo",
+          "dataType": "nvarchar",
+          "description": "Indica se è un documento di acquisto (A) o di vendita (V)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Tipo4",
+          "dataType": "nvarchar",
+          "description": "Indica il tipo specifico di documento: VFI (fattura immediata vendita), VDT (documento di trasporto vendita), VFD (fattura differita vendita), VNC (nota credito vendita), AFI (fattura immediata acquisto), ADT (documento di trasporto acquisto), AFD (fattura differita acquisto), ANC (nota credito acquisto)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroDocumento",
+          "dataType": "long",
+          "description": "Numero progressivo del documento",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "LetteraDocumento",
+          "dataType": "nvarchar",
+          "description": "Lettera identificativa del documento",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "DataDocumento",
+          "dataType": "datetime",
+          "description": "Data del documento in formato italiano (dd/MM/yyyy)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceCliente",
+          "dataType": "nvarchar",
+          "description": "Codice del cliente associato al documento",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Clienti",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "RagioneSocialeCliente",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del cliente",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceFornitore",
+          "dataType": "nvarchar",
+          "description": "Codice del fornitore associato al documento",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Fornitori",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "RagioneSocialeFornitore",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "TotaleImponibile",
+          "dataType": "nvarchar",
+          "description": "Totale imponibile del documento",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "TotaleIva",
+          "dataType": "decimal",
+          "description": "Importo totale dell'IVA",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Iva",
+          "dataType": "decimal",
+          "description": "Percentuale di IVA applicata",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceCliente",
+          "toTable": "Clienti",
+          "toColumn": "Codice"
+        },
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceFornitore",
+          "toTable": "Fornitori",
+          "toColumn": "Codice"
+        },
+        {
+          "type": "OneToMany",
+          "fromColumn": "Id",
+          "toTable": "CorpoDocumento",
+          "toColumn": "IdTestata"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IDX_TestataDocumento_Tipo",
+          "columns": ["Tipo"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataDocumento_Tipo4",
+          "columns": ["Tipo4"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataDocumento_DataDocumento",
+          "columns": ["DataDocumento"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataDocumento_CodiceCliente",
+          "columns": ["CodiceCliente"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataDocumento_CodiceFornitore",
+          "columns": ["CodiceFornitore"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella TestataDocumento (spesso abbreviata come TD) contiene le informazioni principali di ogni documento emesso o ricevuto. È usata per registrare fatture, DDT, note di credito sia di vendita che di acquisto. Per le vendite, Tipo='V' e per gli acquisti, Tipo='A'. Il campo Tipo4 specifica il tipo esatto di documento.",
+      "module": "documenti",
+      "keywords": ["documento", "fattura", "ddt", "vendita", "acquisto", "testata"]
+    },
+    {
+      "name": "CorpoDocumento",
+      "description": "Tabella per le righe di dettaglio dei documenti",
+      "columns": [
+        {
+          "name": "IdTestata",
+          "dataType": "uniqueidentifier",
+          "description": "Riferimento alla testata del documento",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "TestataDocumento",
+          "referencedColumn": "Id"
+        },
+        {
+          "name": "TipoArticolo",
+          "dataType": "nvarchar",
+          "description": "Tipo di riga: AR (articoli/prodotti), IM (imballaggi), AC (accessori), NO (note), PE (pedane), SV (servizi)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroLotto",
+          "dataType": "int",
+          "description": "Numero di lotto per la tracciabilità",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "LottoProduttore",
+          "dataType": "nvarchar",
+          "description": "Lotto associato al produttore o fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "LottoLavorazione",
+          "dataType": "nvarchar",
+          "description": "Lotto della lavorazione interna",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceArticolo",
+          "dataType": "nvarchar",
+          "description": "Codice dell'articolo",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Articoli",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "DescrizioneArticolo",
+          "dataType": "nvarchar",
+          "description": "Descrizione dell'articolo",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroColli",
+          "dataType": "decimal",
+          "description": "Numero di cassette o imballaggi",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "PesoTara",
+          "dataType": "decimal",
+          "description": "Peso dell'imballaggio",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "PesoNetto",
+          "dataType": "decimal",
+          "description": "Quantità effettiva del prodotto",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Prezzo",
+          "dataType": "decimal",
+          "description": "Prezzo unitario",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Imponibile",
+          "dataType": "decimal",
+          "description": "Valore totale della riga",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "AliquotaIva",
+          "dataType": "decimal",
+          "description": "Percentuale IVA applicata alla riga",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [
+        {
+          "type": "ManyToOne",
+          "fromColumn": "IdTestata",
+          "toTable": "TestataDocumento",
+          "toColumn": "Id"
+        },
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceArticolo",
+          "toTable": "Articoli",
+          "toColumn": "Codice"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IDX_CorpoDocumento_IdTestata",
+          "columns": ["IdTestata"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoDocumento_TipoArticolo",
+          "columns": ["TipoArticolo"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoDocumento_CodiceArticolo",
+          "columns": ["CodiceArticolo"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoDocumento_NumeroLotto",
+          "columns": ["NumeroLotto"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella CorpoDocumento (spesso abbreviata come CD) contiene tutte le righe di dettaglio dei documenti. È utilizzata per registrare i singoli articoli, quantità, prezzi e importi. Quando si calcolano le quantità vendute o acquistate, si utilizza PesoNetto. Per i calcoli di prezzo medio ponderato, si usa sempre SUM(Imponibile)/SUM(PesoNetto).",
+      "module": "documenti",
+      "keywords": ["righe", "articoli", "lotti", "prezzi", "quantità", "corpo documento"]
+    },
+    {
+      "name": "TestataContabilita",
+      "description": "Tabella per le testate dei movimenti contabili",
+      "columns": [
+        {
+          "name": "Id",
+          "dataType": "uniqueidentifier",
+          "description": "Identificativo univoco della registrazione contabile",
+          "isPrimaryKey": true,
+          "isForeignKey": false
+        },
+        {
+          "name": "Tipo",
+          "dataType": "nvarchar",
+          "description": "Tipo di movimento: M (movimento), V (vendita), A (acquisto), I (incasso), P (pagamento)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Tipo4",
+          "dataType": "nvarchar",
+          "description": "Tipo specifico di documento collegato: VFI, VDT, VFD, VNC, AFI, ADT, AFD, ANC",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroRegistrazione",
+          "dataType": "long",
+          "description": "Numero progressivo della registrazione contabile",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "DataRegistrazione",
+          "dataType": "datetime",
+          "description": "Data della registrazione in formato italiano (dd/MM/yyyy)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceCausaleContabile",
+          "dataType": "nvarchar",
+          "description": "Codice della causale contabile",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "DescrizioneCausaleContabile",
+          "dataType": "nvarchar",
+          "description": "Descrizione della causale contabile",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceCliente",
+          "dataType": "nvarchar",
+          "description": "Codice del cliente collegato alla registrazione",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Clienti",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "RagioneSocialeCliente",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del cliente",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceFornitore",
+          "dataType": "nvarchar",
+          "description": "Codice del fornitore collegato alla registrazione",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Fornitori",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "RagioneSocialeFornitore",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "TotaleAvere",
+          "dataType": "decimal",
+          "description": "Totale delle registrazioni in avere",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "TotaleDare",
+          "dataType": "decimal",
+          "description": "Totale delle registrazioni in dare",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceCliente",
+          "toTable": "Clienti",
+          "toColumn": "Codice"
+        },
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceFornitore",
+          "toTable": "Fornitori",
+          "toColumn": "Codice"
+        },
+        {
+          "type": "OneToMany",
+          "fromColumn": "Id",
+          "toTable": "CorpoContabilita",
+          "toColumn": "IdTestata"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IDX_TestataContabilita_Tipo",
+          "columns": ["Tipo"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataContabilita_DataRegistrazione",
+          "columns": ["DataRegistrazione"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataContabilita_CodiceCliente",
+          "columns": ["CodiceCliente"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_TestataContabilita_CodiceFornitore",
+          "columns": ["CodiceFornitore"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella TestataContabilita (spesso abbreviata come TC) contiene le registrazioni contabili principali. Ogni movimento contabile ha sempre una testata con i dettagli generali e righe collegate che rappresentano i conti movimentati. La tabella è utilizzata per bilanci, rendiconti e analisi finanziarie.",
+      "module": "contabilita",
+      "keywords": ["contabilità", "registrazione", "partita doppia", "movimento", "incasso", "pagamento"]
+    },
+    {
+      "name": "CorpoContabilita",
+      "description": "Tabella per le righe di dettaglio dei movimenti contabili",
+      "columns": [
+        {
+          "name": "IdTestata",
+          "dataType": "uniqueidentifier",
+          "description": "Riferimento alla testata della registrazione contabile",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "TestataContabilita",
+          "referencedColumn": "Id"
+        },
+        {
+          "name": "Sezionale",
+          "dataType": "nvarchar",
+          "description": "Indica il tipo di registrazione: D (dare - uscita di valore o incremento attività), A (avere - entrata di valore o incremento passività)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceContoContabile",
+          "dataType": "nvarchar",
+          "description": "Codice del conto contabile movimentato",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "DescrizioneContoContabile",
+          "dataType": "nvarchar",
+          "description": "Descrizione del conto contabile",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "ImportoDare",
+          "dataType": "decimal",
+          "description": "Importo registrato nella colonna Dare",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "ImpoortoAvere",
+          "dataType": "decimal",
+          "description": "Importo registrato nella colonna Avere",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "AliquotaIva",
+          "dataType": "decimal",
+          "description": "Aliquota IVA applicata",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [
+        {
+          "type": "ManyToOne",
+          "fromColumn": "IdTestata",
+          "toTable": "TestataContabilita",
+          "toColumn": "Id"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IDX_CorpoContabilita_IdTestata",
+          "columns": ["IdTestata"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoContabilita_CodiceContoContabile",
+          "columns": ["CodiceContoContabile"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoContabilita_Sezionale",
+          "columns": ["Sezionale"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella CorpoContabilita (spesso abbreviata come CC) contiene i dettagli delle registrazioni contabili. Ogni riga rappresenta un movimento su un conto specifico. La partita doppia è garantita dal fatto che la somma degli importi in Dare deve essere uguale alla somma degli importi in Avere per ogni registrazione.",
+      "module": "contabilita",
+      "keywords": ["conti", "dare", "avere", "partita doppia", "movimento contabile"]
+    },
+    {
+      "name": "CorpoRicezioneMerceTemp",
+      "description": "Tabella temporanea per la ricezione della merce",
+      "columns": [
+        {
+          "name": "TipoArticolo",
+          "dataType": "nvarchar",
+          "description": "Tipo di riga: AR (articoli/prodotti), IM (imballaggi), AC (accessori), NO (note), PE (pedane), SV (servizi)",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroLotto",
+          "dataType": "int",
+          "description": "Numero di lotto per la tracciabilità",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "LottoProduttore",
+          "dataType": "nvarchar",
+          "description": "Lotto associato al produttore o fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceArticolo",
+          "dataType": "nvarchar",
+          "description": "Codice dell'articolo",
+          "isPrimaryKey": false,
+          "isForeignKey": true,
+          "referencedTable": "Articoli",
+          "referencedColumn": "Codice"
+        },
+        {
+          "name": "DescrizioneArticolo",
+          "dataType": "nvarchar",
+          "description": "Descrizione dell'articolo",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "NumeroColli",
+          "dataType": "decimal",
+          "description": "Numero di cassette o imballaggi",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "PesoTara",
+          "dataType": "decimal",
+          "description": "Peso dell'imballaggio",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "PesoNetto",
+          "dataType": "decimal",
+          "description": "Quantità effettiva del prodotto",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Prezzo",
+          "dataType": "decimal",
+          "description": "Prezzo unitario",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Imponibile",
+          "dataType": "decimal",
+          "description": "Valore totale della riga",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "AliquotaIva",
+          "dataType": "decimal",
+          "description": "Percentuale IVA applicata alla riga",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [
+        {
+          "type": "ManyToOne",
+          "fromColumn": "CodiceArticolo",
+          "toTable": "Articoli",
+          "toColumn": "Codice"
+        }
+      ],
+      "indexes": [
+        {
+          "name": "IDX_CorpoRicezioneMerceTemp_CodiceArticolo",
+          "columns": ["CodiceArticolo"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_CorpoRicezioneMerceTemp_NumeroLotto",
+          "columns": ["NumeroLotto"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella CorpoRicezioneMerceTemp è utilizzata temporaneamente durante il processo di ricezione merce. Contiene le righe di dettaglio della merce in arrivo prima che vengano trasferite in documenti ufficiali come DDT o fatture di acquisto.",
+      "module": "magazzino",
+      "keywords": ["ricezione", "merce", "temporaneo", "lotti", "acquisto"]
+    },
+    {
+      "name": "Clienti",
+      "description": "Anagrafica clienti",
+      "columns": [
+        {
+          "name": "Codice",
+          "dataType": "nvarchar",
+          "description": "Codice identificativo del cliente",
+          "isPrimaryKey": true,
+          "isForeignKey": false
+        },
+        {
+          "name": "RagioneSociale",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del cliente",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Indirizzo",
+          "dataType": "nvarchar",
+          "description": "Indirizzo del cliente",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Comune",
+          "dataType": "nvarchar",
+          "description": "Comune del cliente",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [],
+      "indexes": [
+        {
+          "name": "IDX_Clienti_RagioneSociale",
+          "columns": ["RagioneSociale"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_Clienti_Comune",
+          "columns": ["Comune"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella Clienti (spesso abbreviata come CL) contiene tutti i dati anagrafici dei clienti. È utilizzata per la gestione delle vendite, fatturazione, spedizioni e analisi commerciali.",
+      "module": "anagrafiche",
+      "keywords": ["clienti", "anagrafica", "vendite", "fatturazione"]
+    },
+    {
+      "name": "Fornitori",
+      "description": "Anagrafica fornitori",
+      "columns": [
+        {
+          "name": "Codice",
+          "dataType": "nvarchar",
+          "description": "Codice identificativo del fornitore",
+          "isPrimaryKey": true,
+          "isForeignKey": false
+        },
+        {
+          "name": "RagioneSociale",
+          "dataType": "nvarchar",
+          "description": "Ragione sociale del fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Indirizzo",
+          "dataType": "nvarchar",
+          "description": "Indirizzo del fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "Comune",
+          "dataType": "nvarchar",
+          "description": "Comune del fornitore",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [],
+      "indexes": [
+        {
+          "name": "IDX_Fornitori_RagioneSociale",
+          "columns": ["RagioneSociale"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_Fornitori_Comune",
+          "columns": ["Comune"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella Fornitori (spesso abbreviata come FO) contiene tutti i dati anagrafici dei fornitori. È utilizzata per la gestione degli acquisti, ordini, pagamenti e analisi dei costi.",
+      "module": "anagrafiche",
+      "keywords": ["fornitori", "anagrafica", "acquisti", "pagamenti"]
+    },
+    {
+      "name": "Articoli",
+      "description": "Anagrafica articoli e prodotti",
+      "columns": [
+        {
+          "name": "Codice",
+          "dataType": "nvarchar",
+          "description": "Codice identificativo dell'articolo",
+          "isPrimaryKey": true,
+          "isForeignKey": false
+        },
+        {
+          "name": "Descrizione",
+          "dataType": "nvarchar",
+          "description": "Descrizione dell'articolo",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "CodiceSottoFamiglia",
+          "dataType": "nvarchar",
+          "description": "Codice della sottofamiglia/categoria/gruppo",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        },
+        {
+          "name": "DescrizioneSottofamiglia",
+          "dataType": "nvarchar",
+          "description": "Descrizione della sottofamiglia/categoria/gruppo",
+          "isPrimaryKey": false,
+          "isForeignKey": false
+        }
+      ],
+      "relations": [],
+      "indexes": [
+        {
+          "name": "IDX_Articoli_Descrizione",
+          "columns": ["Descrizione"],
+          "isUnique": false
+        },
+        {
+          "name": "IDX_Articoli_CodiceSottoFamiglia",
+          "columns": ["CodiceSottoFamiglia"],
+          "isUnique": false
+        }
+      ],
+      "commonUsage": "La tabella Articoli (spesso abbreviata come AR) contiene tutte le informazioni sui prodotti ortofrutticoli, imballaggi e altri articoli gestiti. È fondamentale per vendite, acquisti, magazzino e analisi di prodotto.",
+      "module": "anagrafiche",
+      "keywords": ["articoli", "prodotti", "frutta", "verdura", "anagrafica", "catalogo"]
+    }
+  ],
+  "businessRules": [
+    {
+      "name": "Identificazione Tipo Documento",
+      "description": "Regole per identificare i tipi di documento nel sistema",
+      "details": "I documenti nel sistema sono identificati da codici. Il campo 'Tipo' indica la macro categoria (V = vendita, A = acquisto). Il campo 'Tipo4' specifica il tipo esatto: VFI (fattura immediata vendita), VDT (documento di trasporto vendita), VFD (fattura differita vendita), VNC (nota credito vendita), AFI (fattura immediata acquisto), ADT (documento di trasporto acquisto), AFD (fattura differita acquisto), ANC (nota credito acquisto). Questi codici sono fondamentali per filtrare correttamente i documenti nelle query.",
+      "relatedTables": ["TestataDocumento", "CorpoDocumento", "TestataContabilita"],
+      "examples": "Per trovare tutte le fatture di vendita: TestataDocumento.Tipo = 'V' AND TestataDocumento.Tipo4 IN ('VFI', 'VFD'). Per trovare tutti i documenti di trasporto: TestataDocumento.Tipo4 IN ('VDT', 'ADT').",
+      "module": "documenti",
+      "keywords": ["documento", "tipo", "vendita", "acquisto", "fattura", "ddt"]
+    },
+    {
+      "name": "Calcolo Prezzo Medio Ponderato",
+      "description": "Regola per il calcolo corretto del prezzo medio ponderato",
+      "details": "Il prezzo medio ponderato deve sempre essere calcolato come SUM(Imponibile)/SUM(PesoNetto) e non come AVG(Prezzo). Questo perché il prezzo unitario (Prezzo) non tiene conto dei volumi, mentre l'imponibile (Imponibile) rappresenta il valore effettivo della transazione. Inoltre, per evitare errori di divisione per zero, utilizzare sempre NULLIF(SUM(PesoNetto), 0) nel denominatore.",
+      "relatedTables": ["CorpoDocumento"],
+      "examples": "Calcolo corretto: SELECT CodiceArticolo, SUM(Imponibile)/NULLIF(SUM(PesoNetto), 0) AS PrezzoMedioPonderato FROM CorpoDocumento GROUP BY CodiceArticolo",
+      "module": "analisi",
+      "keywords": ["prezzo", "media", "ponderata", "calcolo", "divisione"]
+    },
+    {
+      "name": "Ricerca Articoli",
+      "description": "Best practice per la ricerca degli articoli",
+      "details": "Quando si cercano articoli per nome o descrizione, utilizzare sempre l'operatore LIKE con wildcard (%) invece di corrispondenze esatte. Questo garantisce che vengano trovate corrispondenze parziali indipendentemente dalla forma singolare/plurale o da piccole variazioni nel nome.",
+      "relatedTables": ["Articoli", "CorpoDocumento"],
+      "examples": "Invece di WHERE Articoli.Descrizione = 'pomodori', usare WHERE Articoli.Descrizione LIKE '%pomod%'",
+      "module": "anagrafiche",
+      "keywords": ["ricerca", "articoli", "like", "wildcard", "corrispondenza"]
+    },
+    {
+      "name": "Partita Doppia Contabile",
+      "description": "Regole della partita doppia in contabilità",
+      "details": "Ogni registrazione contabile deve rispettare il principio della partita doppia: la somma dei valori in Dare deve essere uguale alla somma dei valori in Avere. Nel campo 'Sezionale' della tabella CorpoContabilita, 'D' indica Dare (uscita di valore o incremento di attività) e 'A' indica Avere (entrata di valore o incremento di passività).",
+      "relatedTables": ["TestataContabilita", "CorpoContabilita"],
+      "examples": "Verifica di una corretta registrazione: SELECT IdTestata, SUM(ImportoDare) as TotaleDare, SUM(ImpoortoAvere) as TotaleAvere FROM CorpoContabilita GROUP BY IdTestata HAVING SUM(ImportoDare) <> SUM(ImpoortoAvere)",
+      "module": "contabilita",
+      "keywords": ["partita doppia", "dare", "avere", "contabilità", "bilancio"]
+    }
+  ],
+  "storedProcedures": [
+    {
+      "name": "sp_GetVenditePerPeriodo",
+      "description": "Recupera le vendite per un periodo specificato",
+      "parameters": [
+        {
+          "name": "DataInizio",
+          "dataType": "datetime",
+          "description": "Data di inizio del periodo (formato dd/MM/yyyy)",
+          "isOutput": false
+        },
+        {
+          "name": "DataFine",
+          "dataType": "datetime",
+          "description": "Data di fine del periodo (formato dd/MM/yyyy)",
+          "isOutput": false
+        },
+        {
+          "name": "CodiceCliente",
+          "dataType": "nvarchar",
+          "description": "Codice cliente (opzionale, NULL per tutti)",
+          "isOutput": false
+        }
+      ],
+      "resultDescription": "Restituisce l'elenco delle vendite nel periodo con dettagli su articoli, quantità e importi",
+      "usage": "EXEC sp_GetVenditePerPeriodo @DataInizio = '01/01/2023', @DataFine = '31/01/2023', @CodiceCliente = NULL",
+      "module": "vendite",
+      "keywords": ["vendite", "periodo", "cliente", "analisi"]
+    },
+    {
+      "name": "sp_GetAcquistiPerFornitore",
+      "description": "Recupera gli acquisti per un fornitore specifico",
+      "parameters": [
+        {
+          "name": "CodiceFornitore",
+          "dataType": "nvarchar",
+          "description": "Codice del fornitore",
+          "isOutput": false
+        },
+        {
+          "name": "Anno",
+          "dataType": "int",
+          "description": "Anno di riferimento",
+          "isOutput": false
+        }
+      ],
+      "resultDescription": "Restituisce l'elenco degli acquisti da un fornitore in un anno specifico con dettagli su articoli, quantità e importi",
+      "usage": "EXEC sp_GetAcquistiPerFornitore @CodiceFornitore = 'F001', @Anno = 2023",
+      "module": "acquisti",
+      "keywords": ["acquisti", "fornitore", "anno", "analisi"]
+    }
+  ],
+  "queryExamples": [
+    {
+      "description": "Prodotti più venduti in un periodo",
+      "sqlQuery": "SELECT CD.CodiceArticolo, CD.DescrizioneArticolo, SUM(CD.PesoNetto) AS QuantitaTotale, SUM(CD.Imponibile) AS ValoTotale, SUM(CD.Imponibile)/NULLIF(SUM(CD.PesoNetto), 0) AS PrezzoMedio\nFROM TestataDocumento TD\nINNER JOIN CorpoDocumento CD ON TD.Id = CD.IdTestata\nWHERE TD.Tipo = 'V'\nAND TD.DataDocumento BETWEEN '01/01/2023' AND '31/12/2023'\nAND CD.TipoArticolo = 'AR'\nGROUP BY CD.CodiceArticolo, CD.DescrizioneArticolo\nORDER BY QuantitaTotale DESC;",
+      "explanation": "Questa query estrae i prodotti più venduti in ordine decrescente di quantità. Combina la testata documenti con le righe dettaglio, filtra solo i documenti di vendita (Tipo = 'V') e solo le righe di tipo articolo (TipoArticolo = 'AR'). Calcola la quantità totale, il valore totale e il prezzo medio ponderato.",
+      "useCase": "Questa query è utilizzata per analisi di vendita, identificare i prodotti di punta e valutare il mix di vendita in un determinato periodo.",
+      "module": "vendite",
+      "keywords": ["vendite", "prodotti", "quantità", "prezzo medio", "analisi"]
+    },
+    {
+      "description": "Acquisti per fornitore e categoria",
+      "sqlQuery": "SELECT FO.Codice AS CodiceFornitore, FO.RagioneSociale AS Fornitore, AR.CodiceSottoFamiglia, AR.DescrizioneSottofamiglia, SUM(CD.PesoNetto) AS QuantitaTotale, SUM(CD.Imponibile) AS ValoreTotale\nFROM TestataDocumento TD\nINNER JOIN Fornitori FO ON TD.CodiceFornitore = FO.Codice\nINNER JOIN CorpoDocumento CD ON TD.Id = CD.IdTestata\nINNER JOIN Articoli AR ON CD.CodiceArticolo = AR.Codice\nWHERE TD.Tipo = 'A'\nAND TD.DataDocumento BETWEEN '01/01/2023' AND '31/12/2023'\nAND CD.TipoArticolo = 'AR'\nGROUP BY FO.Codice, FO.RagioneSociale, AR.CodiceSottoFamiglia, AR.DescrizioneSottofamiglia\nORDER BY FO.RagioneSociale, ValoreTotale DESC;",
+      "explanation": "Questa query analizza gli acquisti per fornitore e categoria di prodotto. Combina le tabelle di testata documenti, fornitori, righe dettaglio e articoli. Filtra solo i documenti di acquisto (Tipo = 'A') e raggruppa per fornitore e categoria di prodotto.",
+      "useCase": "Utilizzata per analizzare la distribuzione degli acquisti tra i fornitori e le categorie di prodotto, identificare i fornitori principali per ciascuna categoria.",
+      "module": "acquisti",
+      "keywords": ["acquisti", "fornitori", "categorie", "analisi"]
+    },
+    {
+      "description": "Fatture di vendita non pagate",
+      "sqlQuery": "SELECT TD.NumeroDocumento, TD.DataDocumento, TD.RagioneSocialeCliente, TD.TotaleImponibile, TD.TotaleIva, (CAST(TD.TotaleImponibile AS decimal) + TD.TotaleIva) AS TotaleFattura\nFROM TestataDocumento TD\nLEFT JOIN TestataContabilita TC ON \n    TC.Tipo = 'I' AND \n    TC.CodiceCliente = TD.CodiceCliente\nWHERE TD.Tipo = 'V'\nAND TD.Tipo4 IN ('VFI', 'VFD')\nAND TD.DataDocumento BETWEEN '01/01/2023' AND '31/12/2023'\nAND TC.Id IS NULL\nORDER BY TD.DataDocumento;",
+      "explanation": "Questa query identifica le fatture di vendita per le quali non è stato registrato un incasso. Utilizza un LEFT JOIN tra la tabella delle testate documenti e la tabella delle testate contabili, cercando registrazioni di tipo 'I' (incasso) per lo stesso cliente.",
+      "useCase": "Utilizzata per monitorare i crediti non incassati e gestire i solleciti di pagamento.",
+      "module": "contabilita",
+      "keywords": ["fatture", "pagamenti", "crediti", "incassi", "solleciti"]
+    },
+    {
+      "description": "Ricerca articoli per descrizione",
+      "sqlQuery": "SELECT AR.Codice, AR.Descrizione, AR.CodiceSottoFamiglia, AR.DescrizioneSottofamiglia\nFROM Articoli AR\nWHERE AR.Descrizione LIKE '%pomod%'\nOR AR.Descrizione LIKE '%tomat%'\nORDER BY AR.Descrizione;",
+      "explanation": "Questa query cerca articoli la cui descrizione contenga 'pomod' o 'tomat', utilizzando l'operatore LIKE con wildcard per trovare corrispondenze parziali. In questo modo si trovano sia 'pomodoro' che 'pomodori', 'pomodorini', ecc.",
+      "useCase": "Utilizzata per ricerche flessibili nel catalogo prodotti, quando non si conosce il codice esatto dell'articolo.",
+      "module": "anagrafiche",
+      "keywords": ["ricerca", "articoli", "descrizione", "catalogo"]
+    },
+    {
+      "description": "Marginalità per cliente e categoria",
+      "sqlQuery": "SELECT CL.Codice AS CodiceCliente, CL.RagioneSociale AS Cliente, AR.CodiceSottoFamiglia, AR.DescrizioneSottofamiglia, \n    SUM(CD.PesoNetto) AS QuantitaVenduta, \n    SUM(CD.Imponibile) AS Fatturato,\n    SUM(CD.Imponibile)/NULLIF(SUM(CD.PesoNetto), 0) AS PrezzoMedioVendita\nFROM TestataDocumento TD\nINNER JOIN Clienti CL ON TD.CodiceCliente = CL.Codice\nINNER JOIN CorpoDocumento CD ON TD.Id = CD.IdTestata\nINNER JOIN Articoli AR ON CD.CodiceArticolo = AR.Codice\nWHERE TD.Tipo = 'V'\nAND TD.DataDocumento BETWEEN '01/01/2023' AND '31/12/2023'\nAND CD.TipoArticolo = 'AR'\nGROUP BY CL.Codice, CL.RagioneSociale, AR.CodiceSottoFamiglia, AR.DescrizioneSottofamiglia\nORDER BY Fatturato DESC;",
+      "explanation": "Questa query analizza la marginalità per cliente e categoria di prodotto. Calcola la quantità venduta, il fatturato e il prezzo medio di vendita per ogni combinazione cliente-categoria.",
+      "useCase": "Utilizzata per analizzare la redditività dei clienti e delle categorie di prodotto, identificare le combinazioni più profittevoli.",
+      "module": "vendite",
+      "keywords": ["marginalità", "clienti", "categorie", "fatturato", "analisi"]
+    }
+  ],
+  "additionalMetadata": {
+    "settore": "Ortofrutticolo",
+    "tipologieArticoli": ["AR - Articoli/prodotti", "IM - Imballaggi", "AC - Accessori", "NO - Note", "PE - Pedane", "SV - Servizi"],
+    "tipiDocumento": {
+      "vendita": ["VFI - Fattura immediata vendita", "VDT - Documento di trasporto vendita", "VFD - Fattura differita vendita", "VNC - Nota credito vendita"],
+      "acquisto": ["AFI - Fattura immediata acquisto", "ADT - Documento di trasporto acquisto", "AFD - Fattura differita acquisto", "ANC - Nota credito acquisto"]
+    },
+    "contabilita": {
+      "tipiRegistrazione": ["M - Movimento", "V - Vendita", "A - Acquisto", "I - Incasso", "P - Pagamento"],
+      "sezioniContabili": ["D - Dare", "A - Avere"]
+    },
+    "formatoDate": "dd/MM/yyyy"
+  }
+} 
