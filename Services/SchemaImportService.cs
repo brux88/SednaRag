@@ -1,6 +1,7 @@
 ﻿using Azure.AI.OpenAI;
 using Azure.Search.Documents;
 using Azure.Search.Documents.Models;
+using Microsoft.Extensions.Logging;
 using OpenAI;
 using OpenAI.Embeddings;
 using SednaRag.Models;
@@ -469,6 +470,241 @@ namespace SednaRag.Services
             }
 
             return result;
+        }
+
+
+        public async Task<ClientSchema> GetFullSchemaAsync(string clientId)
+        {
+            try
+            {
+                _logger.LogInformation("Recupero dello schema completo per client {ClientId}", clientId);
+
+                // Prepara la ricerca per recuperare tutti i documenti per il client
+                var searchOptions = new SearchOptions
+                {
+                    Size = 1000, // Recupera fino a 1000 documenti (il limite massimo)
+                    Select = { "Id", "Title", "Content", "ContentType", "Module", "Keywords" },
+                    Filter = $"ClientId eq '{clientId}'"
+                };
+
+                // Esegui la ricerca
+                var searchResponse = await _searchClient.SearchAsync<SchemaDocument>("*", searchOptions);
+                var results =   searchResponse.Value.GetResults();
+
+                _logger.LogInformation($"Recuperati   documenti dello schema" );
+
+                // Organizza i risultati per ricreare lo schema completo
+                var clientSchema = new ClientSchema
+                {
+                    ClientId = clientId,
+                    Tables = new List<TableDefinition>(),
+                    StoredProcedures = new List<StoredProcedureDefinition>(),
+                    BusinessRules = new List<BusinessRuleDefinition>(),
+                    QueryExamples = new List<QueryExample>(),
+                    AdditionalMetadata = new Dictionary<string, object>()
+                };
+
+                // Mappa i documenti recuperati nelle rispettive strutture dello schema
+                foreach (var result in results)
+                {
+                    switch (result.Document.ContentType)
+                    {
+                        case "schema_table":
+                            var table = ParseTableDefinition(result.Document);
+                            if (table != null)
+                                clientSchema.Tables.Add(table);
+                            break;
+
+                        case "schema_stored_procedure":
+                            var sp = ParseStoredProcedureDefinition(result.Document);
+                            if (sp != null)
+                                clientSchema.StoredProcedures.Add(sp);
+                            break;
+
+                        case "business_rule":
+                            var rule = ParseBusinessRuleDefinition(result.Document);
+                            if (rule != null)
+                                clientSchema.BusinessRules.Add(rule);
+                            break;
+
+                        case "query_example":
+                            var example = ParseQueryExampleDefinition(result.Document);
+                            if (example != null)
+                                clientSchema.QueryExamples.Add(example);
+                            break;
+                    }
+                }
+
+                return clientSchema;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nel recupero dello schema completo per il client {ClientId}", clientId);
+                throw;
+            }
+        }
+
+        // Metodi di parsing per convertire i documenti nelle strutture originali dello schema
+
+        private TableDefinition ParseTableDefinition(SchemaDocument document)
+        {
+            try
+            {
+                // Estrai il nome della tabella dal titolo
+                // Formato tipico: "Tabella: NomeTabella"
+                string tableName = document.Title.Replace("Tabella: ", "").Trim();
+
+                // Crea un oggetto TableDefinition di base
+                var table = new TableDefinition
+                {
+                    Name = tableName,
+                    Module = document.Module,
+                    Keywords = document.Keywords?.ToList() ?? new List<string>()
+                };
+
+                // Estrai la descrizione e altri dettagli dal contenuto
+                var lines = document.Content.Split('\n');
+
+                // Parsing dello stato attuale del documento per estrarre le informazioni
+                // Questo è un esempio semplificato che andrà adattato al formato esatto dei tuoi documenti
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("Descrizione: "))
+                        table.Description = line.Replace("Descrizione: ", "").Trim();
+
+                    // Qui andrebbe aggiunta la logica per estrarre colonne, relazioni, indici, ecc.
+                    // basata sul formato specifico in cui hai salvato queste informazioni
+                }
+
+                // Nota: questo metodo deve essere espanso per recuperare tutti i dettagli completi,
+                // inclusi colonne, relazioni, indici, ecc. dal testo formattato
+
+                return table;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nel parsing della definizione della tabella per il documento {Id}", document.Id);
+                return null;
+            }
+        }
+
+        private StoredProcedureDefinition ParseStoredProcedureDefinition(SchemaDocument document)
+        {
+            try
+            {
+                // Estrai il nome della stored procedure dal titolo
+                // Formato tipico: "Stored Procedure: NomeProcedura"
+                string spName = document.Title.Replace("Stored Procedure: ", "").Trim();
+
+                // Crea un oggetto StoredProcedureDefinition di base
+                var sp = new StoredProcedureDefinition
+                {
+                    Name = spName,
+                    Module = document.Module,
+                    Keywords = document.Keywords?.ToList() ?? new List<string>()
+                };
+
+                // Parsing del contenuto
+                var lines = document.Content.Split('\n');
+
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("Descrizione: "))
+                        sp.Description = line.Replace("Descrizione: ", "").Trim();
+
+                    // Qui va aggiunta la logica per estrarre parametri, descrizione del risultato, ecc.
+                }
+
+                return sp;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nel parsing della definizione della stored procedure per il documento {Id}", document.Id);
+                return null;
+            }
+        }
+
+        private BusinessRuleDefinition ParseBusinessRuleDefinition(SchemaDocument document)
+        {
+            try
+            {
+                // Estrai il nome della regola dal titolo
+                // Formato tipico: "Regola: NomeRegola"
+                string ruleName = document.Title.Replace("Regola: ", "").Trim();
+
+                // Crea un oggetto BusinessRuleDefinition di base
+                var rule = new BusinessRuleDefinition
+                {
+                    Name = ruleName,
+                    Module = document.Module,
+                    Keywords = document.Keywords?.ToList() ?? new List<string>()
+                };
+
+                // Parsing del contenuto
+                var lines = document.Content.Split('\n');
+
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("Descrizione: "))
+                        rule.Description = line.Replace("Descrizione: ", "").Trim();
+
+                    // Qui va aggiunta la logica per estrarre dettagli, esempi, tabelle correlate, ecc.
+                }
+
+                return rule;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nel parsing della definizione della regola di business per il documento {Id}", document.Id);
+                return null;
+            }
+        }
+
+        private QueryExample ParseQueryExampleDefinition(SchemaDocument document)
+        {
+            try
+            {
+                // Crea un oggetto QueryExample di base
+                var example = new QueryExample
+                {
+                    Description = document.Title.Replace("Esempio Query: ", "").Trim(),
+                    Module = document.Module,
+                    Keywords = document.Keywords?.ToList() ?? new List<string>()
+                };
+
+                // Parsing del contenuto
+                var content = document.Content;
+
+                // Estrai SQL query
+                int sqlStart = content.IndexOf("SQL:");
+                int explanationStart = content.IndexOf("Spiegazione:");
+
+                if (sqlStart >= 0 && explanationStart > sqlStart)
+                {
+                    example.SqlQuery = content.Substring(sqlStart + 4, explanationStart - sqlStart - 4).Trim();
+                }
+
+                // Estrai spiegazione
+                int useCaseStart = content.IndexOf("Casi d'uso:");
+
+                if (explanationStart >= 0 && useCaseStart > explanationStart)
+                {
+                    example.Explanation = content.Substring(explanationStart + 12, useCaseStart - explanationStart - 12).Trim();
+                }
+
+                // Estrai caso d'uso
+                if (useCaseStart >= 0)
+                {
+                    example.UseCase = content.Substring(useCaseStart + 11).Trim();
+                }
+
+                return example;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Errore nel parsing dell'esempio di query per il documento {Id}", document.Id);
+                return null;
+            }
         }
     }
 }
