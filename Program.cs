@@ -28,6 +28,7 @@ using SednaRag.Helpers;
 using FluentValidation.AspNetCore;
 using FluentValidation;
 using Microsoft.Win32;
+using SednaRag.Services.Clients;
 
 namespace SednaRag
 {
@@ -55,15 +56,54 @@ namespace SednaRag
                 return new AzureOpenAIClient(endpoint, new AzureKeyCredential(key));
             });
 
+            //// Configurazione Azure Cognitive Search
+            //builder.Services.AddSingleton(sp =>
+            //{
+            //    var config = sp.GetRequiredService<IConfiguration>();
+            //    var endpoint = new Uri(config["Azure:Search:Endpoint"]);
+            //    var key = config["Azure:Search:Key"];
+            //    var indexName = config["Azure:Search:IndexName"];
+            //    return new SearchClient(endpoint, indexName, new AzureKeyCredential(key));
+            //});
+
+
             // Configurazione Azure Cognitive Search
             builder.Services.AddSingleton(sp =>
             {
                 var config = sp.GetRequiredService<IConfiguration>();
                 var endpoint = new Uri(config["Azure:Search:Endpoint"]);
                 var key = config["Azure:Search:Key"];
-                var indexName = config["Azure:Search:IndexName"];
-                return new SearchClient(endpoint, indexName, new AzureKeyCredential(key));
+
+                // Registra un client per l'indice dello schema RAG
+                var ragIndexName = config["Azure:Search:Indexes:RagSchema"];
+                return new SearchClient(endpoint, ragIndexName, new AzureKeyCredential(key));
             });
+
+            // Aggiungi client separati per ciascun indice
+            builder.Services.AddSingleton<SupportSearchClient>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var endpoint = new Uri(config["Azure:Search:Endpoint"]);
+                var key = config["Azure:Search:Key"];
+
+                // Client per l'indice dei documenti di supporto
+                var supportIndexName = config["Azure:Search:Indexes:SupportDocs"];
+                return new SupportSearchClient(
+                    new SearchClient(endpoint, supportIndexName, new AzureKeyCredential(key)));
+            });
+
+            builder.Services.AddSingleton<ErpActionSearchClient>(sp =>
+            {
+                var config = sp.GetRequiredService<IConfiguration>();
+                var endpoint = new Uri(config["Azure:Search:Endpoint"]);
+                var key = config["Azure:Search:Key"];
+
+                // Client per l'indice delle azioni ERP
+                var actionsIndexName = config["Azure:Search:Indexes:ErpActions"];
+                return new ErpActionSearchClient(
+                    new SearchClient(endpoint, actionsIndexName, new AzureKeyCredential(key)));
+            });
+
 
             builder.Services.AddHttpContextAccessor();
             builder.Services.AddMemoryCache(); // o un'altra implementazione di IDistributedCache
@@ -77,8 +117,13 @@ namespace SednaRag
                 client.Timeout = TimeSpan.FromSeconds(30);
             });
             // Servizi per RAG
-            builder.Services.AddSingleton<RagService>();
+            builder.Services.AddSingleton<SqlOperatorService>();
             builder.Services.AddSingleton<SchemaImportService>();
+            builder.Services.AddSingleton<SupportDocumentService>();
+            builder.Services.AddSingleton<SupportAgentService>();
+            builder.Services.AddSingleton<ErpActionService>();
+            builder.Services.AddSingleton<ErpOperatorService>();
+            builder.Services.AddSingleton<AgentOrchestratorService>();
 
             // Cache distribuita per ottimizzare richieste ripetute
             builder.Services.AddStackExchangeRedisCache(options =>

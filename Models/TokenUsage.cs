@@ -19,5 +19,8 @@ namespace SednaRag.Models
 
         [JsonPropertyName("totalInQuery")]
         public int TotalInQuery { get; set; }
+
+        [JsonPropertyName("routerTokens")]
+        public int RouterTokens { get; set; } // Nuovo campo
     }
 }

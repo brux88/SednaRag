@@ -11,12 +11,12 @@ namespace SednaRag.Controllers
     [Route("api/[controller]")]
     public class RagSchemaController : ControllerBase
     {
-        private readonly RagService _ragService;
+        private readonly SqlOperatorService _ragService;
         private readonly SchemaImportService _schemaImportService;
         private readonly ILogger<RagSchemaController> _logger;
 
         public RagSchemaController(
-            RagService ragService,
+            SqlOperatorService ragService,
             SchemaImportService schemaImportService,
             ILogger<RagSchemaController> logger)
         {

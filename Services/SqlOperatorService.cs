@@ -16,7 +16,7 @@ using System.Text.Json;
 
 namespace SednaRag.Services
 {
-    public class RagService
+    public class SqlOperatorService
     {
 
  
@@ -24,18 +24,18 @@ namespace SednaRag.Services
         private readonly AzureOpenAIClient _openAIClient;
         private readonly SearchClient _searchClient;
         private readonly IConfiguration _configuration;
-        private readonly ILogger<RagService> _logger;
+        private readonly ILogger<SqlOperatorService> _logger;
         private readonly IDistributedCache _cache;
         private  HttpClient _httpClient;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private string LicenseServiceBaseUrl => _configuration["LicenseService:BaseUrl"];
 
-        public RagService(
+        public SqlOperatorService(
             AzureOpenAIClient openAIClient,
             SearchClient searchClient,
             IConfiguration configuration,
             IDistributedCache cache,
-            ILogger<RagService> logger,
+            ILogger<SqlOperatorService> logger,
             IHttpContextAccessor httpContextAccessor)
         {
             _openAIClient = openAIClient;
@@ -50,7 +50,8 @@ namespace SednaRag.Services
         public async Task<RagQueryResponse> ProcessQueryAsync(
             string query,
             string clientId,
-            string module = null)
+            string? module = null,
+            int routerTokensUsed = 0)
         {
             try
             {
@@ -79,9 +80,16 @@ namespace SednaRag.Services
                 if (!string.IsNullOrEmpty(cachedResponse))
                 {
                     _logger.LogInformation("Risposta trovata in cache per query: {Query}", query);
-                    return JsonSerializer.Deserialize<RagQueryResponse>(cachedResponse);
+                    var responseSerialized =  JsonSerializer.Deserialize<RagQueryResponse>(cachedResponse);
+                    if (responseSerialized != null)
+                    {
+                        responseSerialized.TokensUsed = new TokenUsage();
+                        responseSerialized.TotalTokensUsed = 0;
+                        responseSerialized.TotalTokensUsed = 0;
+                    }
+                    return responseSerialized;
                 }
-               
+
 
                 // Calcola token di embedding (approssimazione)
                 int embeddingTokens = EstimateTokenCount(query);
@@ -94,7 +102,8 @@ namespace SednaRag.Services
                 // Calcola token effettivamente utilizzati in questa query
                 int tokensUsedInQuery = generatedQuery.InputTokens +
                                       generatedQuery.OutputTokens +
-                                      embeddingTokens;
+                                      embeddingTokens +
+                                        routerTokensUsed;
 
                 // Nuovi token residui dopo questa query
                 //int newTokensRemaining = tokensRemaining - tokensUsedInQuery;
@@ -144,6 +153,7 @@ namespace SednaRag.Services
                         OutputTokens = generatedQuery.OutputTokens,
                         TotalTokens = generatedQuery.InputTokens + generatedQuery.OutputTokens,
                         EmbeddingTokens = embeddingTokens,
+                        RouterTokens = routerTokensUsed, // Aggiungi questa proprietà al modello TokenUsage
                         TotalInQuery = tokensUsedInQuery
                     },
                     TokenLimit = richiesteDisponibili, // Usa il valore dal servizio licenze
@@ -337,6 +347,19 @@ namespace SednaRag.Services
         {
             try
             {
+                if (relevantDocuments == null || !relevantDocuments.Any())
+                {
+                    _logger.LogWarning("Nessun documento rilevante trovato per la query: {Query}", query);
+                    return new GeneratedQuery
+                    {
+                        SqlQuery = string.Empty,
+                        Explanation = "Impossibile generare la query. Nessuno schema o contesto rilevante trovato.",
+                        InputTokens = 0,
+                        OutputTokens = 0,
+                        TotalTokens = 0,
+                        IsSafe = false
+                    };
+                }
                 // Costruisci prompt con contesto rilevante
                 var contextText = new StringBuilder();
                 foreach (var doc in relevantDocuments)
