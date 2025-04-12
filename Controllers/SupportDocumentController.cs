@@ -5,7 +5,7 @@ using SednaRag.Services;
 
 namespace SednaRag.Controllers
 {
-    [ApiKey]
+    [ApiKeyAdmin]
     [ApiController]
     [Route("api/[controller]")]
     public class SupportDocumentController : ControllerBase

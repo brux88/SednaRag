@@ -6,7 +6,7 @@ using SednaRag.Services;
 
 namespace SednaRag.Controllers
 {
-    [ApiKey]
+    [ApiKeyAdmin]
     [ApiController]
     [Route("api/[controller]")]
     public class RagSchemaController : ControllerBase
@@ -67,7 +67,7 @@ namespace SednaRag.Controllers
         }
 
         // Endpoint per interrogare il sistema RAG
-        [HttpPost("query")]
+      /* [HttpPost("query")]
         public async Task<IActionResult> QueryRag([FromBody] RagQueryRequest request)
         {
             try
@@ -92,7 +92,7 @@ namespace SednaRag.Controllers
                 _logger.LogError(ex, "Errore nell'elaborazione query RAG");
                 return StatusCode(500, new { Success = false, Error = ex.Message });
             }
-        }
+        }*/
 
         // Endpoint per eseguire la query generata
        /* [HttpPost("execute")]
