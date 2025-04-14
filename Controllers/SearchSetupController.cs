@@ -239,6 +239,8 @@ namespace SednaRag.Controllers
             var indexName = _configuration["Azure:Search:Indexes:ErpActions"];
 
             var indexClient = new SearchIndexClient(endpoint, key);
+   
+      
 
             // Definizione dell'indice per le azioni ERP
             var index = new SearchIndex(indexName)
@@ -252,11 +254,19 @@ namespace SednaRag.Controllers
                     new SearchField("functionName", SearchFieldDataType.String) { IsSearchable = true, IsFilterable = true },
                     new SearchField("assemblyName", SearchFieldDataType.String) { IsFilterable = true },
                    // new SearchField("parameters", SearchFieldDataType.) { IsSearchable = true },
-                    new SearchField("parameters", SearchFieldDataType.Collection(SearchFieldDataType.String))
-                    {
-                        IsSearchable = true,
-                        IsFilterable = true
-                    },
+                new ComplexField("parameters",true)
+                {   
+                    Fields =  {
+                        new SimpleField("name", SearchFieldDataType.String) {  },
+                        new SimpleField("dataType", SearchFieldDataType.String) { },
+                        new SimpleField("description", SearchFieldDataType.String) { },
+                        new SimpleField("required", SearchFieldDataType.Boolean) { IsFilterable = true },
+                        new SimpleField("defaultValue", SearchFieldDataType.String) { } // Aggiunto il campo mancante
+
+                    }
+                },
+ 
+
                     new SearchField("contentVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
                         IsSearchable = true,
