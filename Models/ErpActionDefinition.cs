@@ -1,11 +1,13 @@
-﻿using System.Text.Json.Serialization;
+﻿using SednaRag.Models;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace SednaRag.Models
 {
     public class ErpActionDefinition
     {
         [JsonPropertyName("id")]
-        public string Id { get; set; }
+        public string? Id { get; set; }
 
         [JsonPropertyName("clientId")]
         public string ClientId { get; set; }
@@ -20,22 +22,24 @@ namespace SednaRag.Models
         public string FunctionName { get; set; }
 
         [JsonPropertyName("assemblyName")]
-        public string AssemblyName { get; set; }
+        public string? AssemblyName { get; set; }
 
         [JsonPropertyName("parameters")]
         public List<ErpActionParameter> Parameters { get; set; }
 
+ 
+
         [JsonPropertyName("module")]
-        public string Module { get; set; }
+        public string? Module { get; set; }
 
         [JsonPropertyName("contentVector")]
-        public float[] ContentVector { get; set; }
+        public float[]? ContentVector { get; set; }
 
         [JsonPropertyName("tags")]
-        public List<string> Tags { get; set; }
+        public List<string>? Tags { get; set; }
 
         [JsonPropertyName("actionType")]
-        public string ActionType { get; set; } // Read, Create, Update, Delete, etc.
+        public string? ActionType { get; set; }
 
         [JsonPropertyName("requiresConfirmation")]
         public bool RequiresConfirmation { get; set; }
@@ -45,6 +49,8 @@ namespace SednaRag.Models
 
         [JsonPropertyName("updatedAt")]
         public DateTime UpdatedAt { get; set; }
+
+
     }
 
     public class ErpActionParameter
@@ -62,6 +68,6 @@ namespace SednaRag.Models
         public bool Required { get; set; }
 
         [JsonPropertyName("defaultValue")]
-        public object DefaultValue { get; set; }
+        public object? DefaultValue { get; set; }
     }
 }

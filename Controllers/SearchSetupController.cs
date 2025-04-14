@@ -251,7 +251,12 @@ namespace SednaRag.Controllers
                     new SearchField("description", SearchFieldDataType.String) { IsSearchable = true },
                     new SearchField("functionName", SearchFieldDataType.String) { IsSearchable = true, IsFilterable = true },
                     new SearchField("assemblyName", SearchFieldDataType.String) { IsFilterable = true },
-                    new SearchField("parameters", SearchFieldDataType.String) { IsSearchable = true },
+                   // new SearchField("parameters", SearchFieldDataType.) { IsSearchable = true },
+                    new SearchField("parameters", SearchFieldDataType.Collection(SearchFieldDataType.String))
+                    {
+                        IsSearchable = true,
+                        IsFilterable = true
+                    },
                     new SearchField("contentVector", SearchFieldDataType.Collection(SearchFieldDataType.Single))
                     {
                         IsSearchable = true,

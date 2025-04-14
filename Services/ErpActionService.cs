@@ -142,7 +142,7 @@ namespace SednaRag.Services
                 }
 
                 // Assegna timestamp di creazione
-                action.CreatedAt = DateTime.UtcNow;
+                 action.CreatedAt = DateTime.UtcNow;
                 action.UpdatedAt = DateTime.UtcNow;
 
                 // Genera embedding per l'azione
@@ -379,9 +379,11 @@ namespace SednaRag.Services
                 textBuilder.AppendLine($"Function: {action.FunctionName}");
                 textBuilder.AppendLine("Parameters:");
 
-                if (action.Parameters != null)
+                // Deserializza e aggiungi i parametri
+                var parameters = action.Parameters;
+                if (parameters != null)
                 {
-                    foreach (var param in action.Parameters)
+                    foreach (var param in parameters)
                     {
                         textBuilder.AppendLine($"- {param.Name} ({param.DataType}): {param.Description}");
                     }
