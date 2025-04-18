@@ -147,6 +147,8 @@ namespace SednaRag
                 options.AddPolicy("AllowSpecificOrigins",
                     builder => builder
                         .WithOrigins(
+                            "https://localhost:44379",
+                            "https://localhost:5001",
                             "https://app.ortofruttaerp.com",
                             "https://client.ortofruttaerp.com")
                         .AllowAnyMethod()
