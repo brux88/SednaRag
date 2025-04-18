@@ -149,7 +149,7 @@ namespace SednaRag
                         .WithOrigins(
                             "https://localhost:44379",
                             "https://localhost:5001",
-                            "https://app.ortofruttaerp.com",
+                            "https://sednalicenseapp.azurewebsites.net",
                             "https://client.ortofruttaerp.com")
                         .AllowAnyMethod()
                         .AllowAnyHeader()
